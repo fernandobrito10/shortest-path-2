@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filmes em Comum</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        .input-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-container div {
+            flex: 1;
+            position: relative;
+            text-align: center; /* Centraliza a imagem e o nome */
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 20px;
+        }
+
+        .actor-photo {
+            width: 200px; /* Ajuste o tamanho da imagem conforme necessário */
+            height: auto; /* Mantém a proporção da imagem */
+            margin-bottom: 8px; /* Espaço entre a imagem e o campo de texto */
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Filmes em Comum</h1>
+        <form action="/filmes_comuns" method="POST">
+            <div class="input-container">
+                <div>
+                    <img id="foto-ator1" class="actor-photo" src="" alt="Foto do Ator 1" style="display: none;">
+                    <label for="ator1">Ator 1:</label>
+                    <input type="text" id="ator1" name="ator1" oninput="buscarAtores('ator1')" autocomplete="off">
+                    <div id="sugestoes-ator1" class="dropdown-suggestions"></div>
+                </div>
+
+                <div>
+                    <img id="foto-ator2" class="actor-photo" src="" alt="Foto do Ator 2" style="display: none;">
+                    <label for="ator2">Ator 2:</label>
+                    <input type="text" id="ator2" name="ator2" oninput="buscarAtores('ator2')" autocomplete="off">
+                    <div id="sugestoes-ator2" class="dropdown-suggestions"></div>
+                </div>
+            </div>
+
+            <button type="submit">Buscar Filmes em Comum</button>
+        </form>
+
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        {% if filmes %}
+            <h2>Filmes em Comum entre {{ ator1 }} e {{ ator2 }}:</h2>
+            <ul>
+                {% for filme in filmes %}
+                    <li>{{ filme }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function buscarAtores(ator) {
+            const input = document.getElementById(ator);
+            const sugestoesDiv = document.getElementById(`sugestoes-${ator}`);
+            const fotoAtor = document.getElementById(`foto-${ator}`);
+            const valor = input.value;
+
+            if (valor.length < 3) {
+                sugestoesDiv.innerHTML = ''; // Limpa as sugestões se menos de 3 caracteres
+                fotoAtor.style.display = 'none'; // Esconde a foto
+                return;
+            }
+
+            const url = `/buscar_atores?query=${encodeURIComponent(valor)}`;
+
+            $.get(url, function(data) {
+                sugestoesDiv.innerHTML = ''; // Limpa as sugestões
+                data.results.forEach(function(ator) {
+                    const div = document.createElement('div');
+                    div.textContent = ator.name;
+                    div.onclick = function() {
+                        input.value = ator.name;
+                        fotoAtor.src = `https://image.tmdb.org/t/p/w200${ator.profile_path}`; // Atualiza a foto do ator
+                        fotoAtor.style.display = 'block'; // Mostra a foto
+                        sugestoesDiv.innerHTML = ''; // Limpa as sugestões
+                    };
+                    sugestoesDiv.appendChild(div);
+                });
+            }).fail(function() {
+                sugestoesDiv.innerHTML = ''; // Limpa as sugestões em caso de erro
+                fotoAtor.style.display = 'none'; // Esconde a foto
+            });
+        }
+    </script>
+</body>
+</html>
